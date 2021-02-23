@@ -23,13 +23,18 @@ from common import AV_DEFINITION_S3_BUCKET
 from common import AV_DEFINITION_S3_PREFIX
 from common import CLAMAVLIB_PATH
 from common import get_timestamp
-
+import shutil
 
 def lambda_handler(event, context):
     s3 = boto3.resource("s3")
     s3_client = boto3.client("s3")
 
     print("Script starting at %s\n" % (get_timestamp()))
+
+    #clean /tmp on the ec2 instance because it doesn't clean itself
+    if os.path.exists(os.path.join(AV_DEFINITION_PATH,'')):
+        shutil.rmtree(os.path.join(AV_DEFINITION_PATH, ''))
+
     to_download = clamav.update_defs_from_s3(
         s3_client, AV_DEFINITION_S3_BUCKET, AV_DEFINITION_S3_PREFIX
     )
