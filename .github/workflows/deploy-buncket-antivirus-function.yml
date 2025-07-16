@@ -1,0 +1,63 @@
+name: Deploy download_maxmind_geoip Lambda
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+      - DAT-21440-workflow
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-west-2
+
+jobs:
+  deploy:
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        include: 
+          # - realm: cyera-prod
+          #   account_id: 112875909405
+          # - realm: cyera-prod-prototype
+          #   account_id: 165581926730
+          # - realm: cyera-stage
+          #   account_id: 925314695942
+          - realm: cyera-stage-prototype
+            account_id: 378356664844
+
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: us-west-2
+          role-to-assume: arn:aws:iam::${{ matrix.account_id }}:role/GithubAction-dgapp-lambda-deploy-${{ matrix.realm}}
+      
+      - uses: actions/checkout@v4      
+
+      - name: Build
+        run: |
+          pwd && ls -la && \
+          make && \
+          ls -la && \
+          ls -la build
+
+      # - name: Zip Lambda code
+      #   run: cd quarantine-scanner && zip -r ../scanner.zip scanner.rb vendor && cd ..
+      
+
+      # - name: Deploy to Lambda
+      #   run: |
+      #     aws lambda update-function-code \
+      #       --function-name quarantine-scan-${{ matrix.realm }} \
+      #       --zip-file fileb://scanner.zip \
+      #       --publish
+
+      # - name: Get Lambda updated info
+      #   run: |
+      #     aws lambda get-function-configuration \
+      #       --function-name quarantine-scan-${{ matrix.realm }} \
+      #       --query '{LastModified: LastModified, Version: Version, CodeSha256: CodeSha256}' \
+      #       --output table
