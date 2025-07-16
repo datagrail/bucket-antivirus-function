@@ -5,7 +5,6 @@ on:
   push:
     branches:
       - master
-      - DAT-21440-workflow
 
 permissions:
   id-token: write
@@ -38,13 +37,7 @@ jobs:
       - uses: actions/checkout@v4      
 
       - name: Build
-        run: |
-          pwd 
-          ls -la 
-          make archive 
-          ls -la 
-          ls -la build
-      
+        run: make archive 
 
       - name: Deploy to Lambda
         run: |
