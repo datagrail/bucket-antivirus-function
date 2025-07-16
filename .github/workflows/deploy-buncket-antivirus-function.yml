@@ -39,9 +39,10 @@ jobs:
 
       - name: Build
         run: |
-          pwd && ls -la && \
-          make archive && \
-          ls -la && \
+          pwd 
+          ls -la 
+          make archive 
+          ls -la 
           ls -la build
       
 
