@@ -40,7 +40,7 @@ jobs:
       - name: Build
         run: |
           pwd && ls -la && \
-          make && \
+          make archive && \
           ls -la && \
           ls -la build
       
