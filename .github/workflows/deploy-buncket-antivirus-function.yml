@@ -33,7 +33,7 @@ jobs:
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: us-west-2
-          role-to-assume: arn:aws:iam::${{ matrix.account_id }}:role/GithubAction-dgapp-lambda-deploy-${{ matrix.realm}}
+          role-to-assume: arn:aws:iam::${{ matrix.account_id }}:role/GHA-lambda-av-deploy-${{ matrix.realm}}
       
       - uses: actions/checkout@v4      
 
@@ -43,21 +43,18 @@ jobs:
           make && \
           ls -la && \
           ls -la build
-
-      # - name: Zip Lambda code
-      #   run: cd quarantine-scanner && zip -r ../scanner.zip scanner.rb vendor && cd ..
       
 
-      # - name: Deploy to Lambda
-      #   run: |
-      #     aws lambda update-function-code \
-      #       --function-name quarantine-scan-${{ matrix.realm }} \
-      #       --zip-file fileb://scanner.zip \
-      #       --publish
+      - name: Deploy to Lambda
+        run: |
+          aws lambda update-function-code \
+            --function-name bucket-antivirus-function-${{ matrix.realm }} \
+            --zip-file fileb://build/lambda.zip \
+            --publish
 
-      # - name: Get Lambda updated info
-      #   run: |
-      #     aws lambda get-function-configuration \
-      #       --function-name quarantine-scan-${{ matrix.realm }} \
-      #       --query '{LastModified: LastModified, Version: Version, CodeSha256: CodeSha256}' \
-      #       --output table
+      - name: Get Lambda updated info
+        run: |
+          aws lambda get-function-configuration \
+            --function-name bucket-antivirus-function-${{ matrix.realm }} \
+            --query '{LastModified: LastModified, Version: Version, CodeSha256: CodeSha256}' \
+            --output table
