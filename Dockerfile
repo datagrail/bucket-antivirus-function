@@ -11,13 +11,17 @@ WORKDIR /opt/app
 COPY ./*.py /opt/app/
 COPY requirements.txt /opt/app/requirements.txt
 
-RUN python3 --version
 # Install packages and ClamAV
+
 RUN yum update -y && \
   amazon-linux-extras install epel -y && \
   yum clean all && \
   yum makecache && \
-  yum install -y yum-utils cpio python3-pip zip unzip less clamav clamav-lib clamav-update json-c pcre2 libprelude gnutls libtasn1 nettle libtool-ltdl
+  yum install -y yum-utils cpio python3-pip
+
+RUN python3 --version && pip3 --version
+
+RUN yum install -y zip unzip less clamav clamav-lib clamav-update json-c pcre2 libprelude gnutls libtasn1 nettle libtool-ltdl
 
 
 # This had --no-cache-dir, tracing through multiple tickets led to a problem in wheel
