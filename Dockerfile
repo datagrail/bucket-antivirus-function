@@ -15,7 +15,7 @@ COPY requirements.txt ./
 RUN pip3 install --upgrade pip && pip3 install -r requirements.txt --target .
 
 # Install system packages needed for ClamAV and others
-RUN yum install -y zip unzip less clamav clamav-lib clamav-update json-c pcre2 libprelude gnutls libtasn1 nettle libtool-ltdl binutils
+RUN yum install -y zip unzip less clamav clamav-lib clamav-update json-c pcre2 libprelude gnutls libtasn1 nettle libtool-ltdl
 
 
 
@@ -25,8 +25,9 @@ RUN rm -rf /root/.cache/pip
 
 # Copy over the binaries and libraries
 WORKDIR /tmp
-RUN cp /usr/bin/clamscan /usr/bin/freshclam /usr/bin/ld /opt/app/bin/ && \
+RUN cp /usr/bin/clamscan /usr/bin/freshclam /opt/app/bin/ && \
   find /usr/lib64 -maxdepth 1 -type f -exec cp {} /opt/app/bin/ \;
+
 # Fix the freshclam.conf settings
 RUN echo "DatabaseMirror database.clamav.net" > /opt/app/bin/freshclam.conf
 RUN echo "CompressLocalDatabase yes" >> /opt/app/bin/freshclam.conf
