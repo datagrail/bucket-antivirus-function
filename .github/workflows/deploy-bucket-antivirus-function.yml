@@ -1,10 +1,11 @@
-name: Deploy download_maxmind_geoip Lambda
+name: Deploy bucket-antivirus Lambda
 
 on:
   workflow_dispatch:
   push:
     branches:
       - master
+      - DAT-21442-bucket-update
 
 permissions:
   id-token: write
@@ -19,12 +20,12 @@ jobs:
     strategy:
       matrix:
         include: 
-          - realm: cyera-prod
-            account_id: 112875909405
-          - realm: cyera-prod-prototype
-            account_id: 165581926730
-          - realm: cyera-stage
-            account_id: 925314695942
+          # - realm: cyera-prod
+          #   account_id: 112875909405
+          # - realm: cyera-prod-prototype
+          #   account_id: 165581926730
+          # - realm: cyera-stage
+          #   account_id: 925314695942
           - realm: cyera-stage-prototype
             account_id: 378356664844
 
@@ -39,16 +40,30 @@ jobs:
       - name: Build
         run: make archive 
 
-      - name: Deploy to Lambda
+      - name: Deploy to bucket-antivirus-function Lambda
         run: |
           aws lambda update-function-code \
             --function-name bucket-antivirus-function-${{ matrix.realm }} \
             --zip-file fileb://build/lambda.zip \
             --publish
 
-      - name: Get Lambda updated info
+      - name: Get bucket-antivirus-function Lambda updated info
         run: |
           aws lambda get-function-configuration \
             --function-name bucket-antivirus-function-${{ matrix.realm }} \
+            --query '{LastModified: LastModified, Version: Version, CodeSha256: CodeSha256}' \
+            --output table
+
+      - name: Deploy to bucket-antivirus-update Lambda
+        run: |
+          aws lambda update-function-code \
+            --function-name bucket-antivirus-update-${{ matrix.realm }} \
+            --zip-file fileb://build/lambda.zip \
+            --publish
+
+      - name: Get bucket-antivirus-update Lambda updated info
+        run: |
+          aws lambda get-function-configuration \
+            --function-name bucket-antivirus-update-${{ matrix.realm }} \
             --query '{LastModified: LastModified, Version: Version, CodeSha256: CodeSha256}' \
             --output table
