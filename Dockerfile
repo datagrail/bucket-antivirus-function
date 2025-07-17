@@ -1,43 +1,27 @@
-FROM amazonlinux:2
+
+# Use the official AWS Lambda Python 3.11 base image
+FROM public.ecr.aws/lambda/python:3.11
+
 
 # Set up working directories
-RUN mkdir -p /opt/app
-RUN mkdir -p /opt/app/build
-RUN mkdir -p /opt/app/bin/
+RUN mkdir -p /opt/app/build /opt/app/bin
 
 # Copy in the lambda source
 WORKDIR /opt/app
+COPY ./*.py ./
+COPY requirements.txt ./
 
-COPY ./*.py /opt/app/
-COPY requirements.txt /opt/app/requirements.txt
+# Install dependencies
+RUN pip3 install --upgrade pip && pip3 install -r requirements.txt --target .
 
-
-# Install Python 3.11 and pip, then other packages
-RUN yum update -y && \
-  amazon-linux-extras install epel -y && \
-  yum clean all && \
-  yum makecache && \
-  yum install -y yum-utils cpio gcc openssl-devel bzip2-devel libffi-devel zlib-devel make
-
-# Build and install Python 3.11
-RUN curl -O https://www.python.org/ftp/python/3.11.9/Python-3.11.9.tgz && \
-  tar xzf Python-3.11.9.tgz && \
-  cd Python-3.11.9 && \
-  ./configure --enable-optimizations && \
-  make altinstall && \
-  cd .. && \
-  rm -rf Python-3.11.9* && \
-  ln -sf /usr/local/bin/python3.11 /usr/local/bin/python3 && \
-  ln -sf /usr/local/bin/pip3.11 /usr/local/bin/pip3
-
-RUN python3 --version && pip3 --version
-
+# Install system packages needed for ClamAV and others
 RUN yum install -y zip unzip less clamav clamav-lib clamav-update json-c pcre2 libprelude gnutls libtasn1 nettle libtool-ltdl
 
 
-# This had --no-cache-dir, tracing through multiple tickets led to a problem in wheel
-RUN pip3 install -r requirements.txt
+
+# Clean up pip cache
 RUN rm -rf /root/.cache/pip
+
 
 # Copy over the binaries and libraries
 WORKDIR /tmp
@@ -48,17 +32,7 @@ RUN cp /usr/bin/clamscan /usr/bin/freshclam /opt/app/bin/ && \
 RUN echo "DatabaseMirror database.clamav.net" > /opt/app/bin/freshclam.conf
 RUN echo "CompressLocalDatabase yes" >> /opt/app/bin/freshclam.conf
 
+
 # Create the zip file
 WORKDIR /opt/app
-RUN zip -r9 --exclude="*test*" /opt/app/build/lambda.zip *.py bin
-
-RUN site_packages=$(python3 -c "import site; print(site.getsitepackages()[0])") && \
-  echo "Detected site-packages: $site_packages" && \
-  if [ -d "$site_packages" ]; then \
-  cd "$site_packages" && \
-  zip -r9 /opt/app/build/lambda.zip . ; \
-  else \
-  echo "ERROR: site-packages directory not found: $site_packages" && exit 1 ; \
-  fi
-
-WORKDIR /opt/app
+RUN zip -r9 --exclude="*test*" /opt/app/build/lambda.zip .
