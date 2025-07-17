@@ -11,13 +11,24 @@ WORKDIR /opt/app
 COPY ./*.py /opt/app/
 COPY requirements.txt /opt/app/requirements.txt
 
-# Install packages and ClamAV
 
+# Install Python 3.11 and pip, then other packages
 RUN yum update -y && \
   amazon-linux-extras install epel -y && \
   yum clean all && \
   yum makecache && \
-  yum install -y yum-utils cpio python3-pip
+  yum install -y yum-utils cpio gcc openssl-devel bzip2-devel libffi-devel zlib-devel make
+
+# Build and install Python 3.11
+RUN curl -O https://www.python.org/ftp/python/3.11.9/Python-3.11.9.tgz && \
+  tar xzf Python-3.11.9.tgz && \
+  cd Python-3.11.9 && \
+  ./configure --enable-optimizations && \
+  make altinstall && \
+  cd .. && \
+  rm -rf Python-3.11.9* && \
+  ln -sf /usr/local/bin/python3.11 /usr/local/bin/python3 && \
+  ln -sf /usr/local/bin/pip3.11 /usr/local/bin/pip3
 
 RUN python3 --version && pip3 --version
 
