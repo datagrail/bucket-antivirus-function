@@ -11,6 +11,7 @@ WORKDIR /opt/app
 COPY ./*.py /opt/app/
 COPY requirements.txt /opt/app/requirements.txt
 
+RUN python3 --version
 # Install packages and ClamAV
 RUN yum update -y && \
   amazon-linux-extras install epel -y && \
@@ -18,7 +19,6 @@ RUN yum update -y && \
   yum makecache && \
   yum install -y yum-utils cpio python3-pip zip unzip less clamav clamav-lib clamav-update json-c pcre2 libprelude gnutls libtasn1 nettle libtool-ltdl
 
-RUN python3 --version
 
 # This had --no-cache-dir, tracing through multiple tickets led to a problem in wheel
 RUN pip3 install -r requirements.txt
@@ -38,7 +38,12 @@ WORKDIR /opt/app
 RUN zip -r9 --exclude="*test*" /opt/app/build/lambda.zip *.py bin
 
 RUN site_packages=$(python3 -c "import site; print(site.getsitepackages()[0])") && \
+  echo "Detected site-packages: $site_packages" && \
+  if [ -d "$site_packages" ]; then \
   cd "$site_packages" && \
-  zip -r9 /opt/app/build/lambda.zip .
+  zip -r9 /opt/app/build/lambda.zip . ; \
+  else \
+  echo "ERROR: site-packages directory not found: $site_packages" && exit 1 ; \
+  fi
 
 WORKDIR /opt/app
