@@ -1,4 +1,4 @@
-name: Deploy bucket-antivirus Lambda
+name: Deploy bucket-antivirus Lambdas
 
 on:
   workflow_dispatch:
