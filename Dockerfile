@@ -1,57 +1,42 @@
 FROM amazonlinux:2
 
 # Set up working directories
+RUN mkdir -p /opt/app
+RUN mkdir -p /opt/app/build
+RUN mkdir -p /opt/app/bin/
+
+# Copy in the lambda source
 WORKDIR /opt/app
-RUN mkdir -p /opt/app/build /opt/app/bin /opt/app/python
 
-# Copy in the lambda source and requirements
-COPY ./*.py ./
-COPY requirements.txt .
+COPY ./*.py /opt/app/
+COPY requirements.txt /opt/app/requirements.txt
 
-# Install dependencies and ClamAV
+# Install packages and ClamAV
 RUN yum update -y && \
-    amazon-linux-extras install epel -y && \
-    yum clean all && \
-    yum makecache && \
-    yum install -y \
-      python3 \
-      python3-pip \
-      yum-utils \
-      cpio \
-      zip \
-      unzip \
-      less \
-      clamav \
-      clamav-lib \
-      clamav-update \
-      json-c \
-      pcre2 \
-      libprelude \
-      gnutls \
-      libtasn1 \
-      nettle \
-      libtool-ltdl
+  amazon-linux-extras install epel -y && \
+  yum clean all && \
+  yum makecache && \
+  yum install -y yum-utils cpio python3-pip zip unzip less clamav clamav-lib clamav-update json-c pcre2 libprelude gnutls libtasn1 nettle libtool-ltdl
 
-# Ensure pip is up to date and install Python packages *only into local path*
-RUN python3 -m pip install --upgrade pip && \
-    pip3 install --no-cache-dir -r requirements.txt --target /opt/app/python
+# This had --no-cache-dir, tracing through multiple tickets led to a problem in wheel
+RUN pip3 install -r requirements.txt
+RUN rm -rf /root/.cache/pip
 
-# Copy ClamAV binaries and dependencies
+# Copy over the binaries and libraries
+WORKDIR /tmp
 RUN cp /usr/bin/clamscan /usr/bin/freshclam /opt/app/bin/ && \
-    find /usr/lib64 -maxdepth 1 -type f -exec cp {} /opt/app/bin/ \;
+  find /usr/lib64 -maxdepth 1 -type f -exec cp {} /opt/app/bin/ \;
 
-# Configure ClamAV
-RUN echo "DatabaseMirror database.clamav.net" > /opt/app/bin/freshclam.conf && \
-    echo "CompressLocalDatabase yes" >> /opt/app/bin/freshclam.conf
+# Fix the freshclam.conf settings
+RUN echo "DatabaseMirror database.clamav.net" > /opt/app/bin/freshclam.conf
+RUN echo "CompressLocalDatabase yes" >> /opt/app/bin/freshclam.conf
 
-# Package Lambda function and dependencies, excluding test files
+# Create the zip file
 WORKDIR /opt/app
+RUN zip -r9 --exclude="*test*" /opt/app/build/lambda.zip *.py bin
 
-# Add source code and ClamAV tools
-RUN zip -r9 build/lambda.zip *.py bin \
-    -x "*test*" "*tests/*" "*__pycache__*" "*.pyc"
+RUN site_packages=$(python3 -c "import site; print(site.getsitepackages()[0])") && \
+  cd "$site_packages" && \
+  zip -r9 /opt/app/build/lambda.zip .
 
-# Add Python dependencies
-WORKDIR /opt/app/python
-RUN zip -r9 /opt/app/build/lambda.zip . \
-    -x "*test*" "*tests/*" "*__pycache__*" "*.pyc"
+WORKDIR /opt/app
