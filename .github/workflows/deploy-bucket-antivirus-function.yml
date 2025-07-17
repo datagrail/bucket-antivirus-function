@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - master
+      - DAT-21442-fix-build
 
 permissions:
   id-token: write
@@ -19,12 +20,12 @@ jobs:
     strategy:
       matrix:
         include: 
-          - realm: cyera-prod
-            account_id: 112875909405
-          - realm: cyera-prod-prototype
-            account_id: 165581926730
-          - realm: cyera-stage
-            account_id: 925314695942
+          # - realm: cyera-prod
+          #   account_id: 112875909405
+          # - realm: cyera-prod-prototype
+          #   account_id: 165581926730
+          # - realm: cyera-stage
+          #   account_id: 925314695942
           - realm: cyera-stage-prototype
             account_id: 378356664844
 
