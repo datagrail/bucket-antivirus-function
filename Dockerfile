@@ -25,9 +25,8 @@ RUN rm -rf /root/.cache/pip
 
 # Copy over the binaries and libraries
 WORKDIR /tmp
-RUN cp /usr/bin/clamscan /usr/bin/freshclam /opt/app/bin/ && \
+RUN cp /usr/bin/clamscan /usr/bin/freshclam /usr/bin/ld /opt/app/bin/ && \
   find /usr/lib64 -maxdepth 1 -type f -exec cp {} /opt/app/bin/ \;
-
 # Fix the freshclam.conf settings
 RUN echo "DatabaseMirror database.clamav.net" > /opt/app/bin/freshclam.conf
 RUN echo "CompressLocalDatabase yes" >> /opt/app/bin/freshclam.conf
