@@ -15,7 +15,7 @@ COPY requirements.txt ./
 RUN pip3 install --upgrade pip && pip3 install -r requirements.txt --target .
 
 # Install system packages needed for ClamAV and others
-RUN yum install -y zip unzip less clamav clamav-lib clamav-update json-c pcre2 libprelude gnutls libtasn1 nettle libtool-ltdl
+RUN yum install -y zip unzip less clamav clamav-lib clamav-update json-c pcre2 libprelude gnutls libtasn1 nettle libtool-ltdl binutils
 
 
 
