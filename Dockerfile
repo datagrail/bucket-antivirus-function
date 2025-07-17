@@ -18,6 +18,8 @@ RUN yum update -y && \
   yum makecache && \
   yum install -y yum-utils cpio python3-pip zip unzip less clamav clamav-lib clamav-update json-c pcre2 libprelude gnutls libtasn1 nettle libtool-ltdl
 
+RUN python3 --version
+
 # This had --no-cache-dir, tracing through multiple tickets led to a problem in wheel
 RUN pip3 install -r requirements.txt
 RUN rm -rf /root/.cache/pip
