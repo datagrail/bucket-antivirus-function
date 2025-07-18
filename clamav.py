@@ -42,9 +42,8 @@ RE_SEARCH_DIR = r"SEARCH_DIR\(\"=([A-z0-9\/\-_]*)\"\)"
 
 
 def current_library_search_path():
-    ld_verbose = subprocess.check_output(["ld", "--verbose"]).decode("utf-8")
-    rd_ld = re.compile(RE_SEARCH_DIR)
-    return rd_ld.findall(ld_verbose)
+    # Just return the directory where your ClamAV .so files are located
+    return [CLAMAVLIB_PATH]
 
 
 def update_defs_from_s3(s3_client, bucket, prefix):
