@@ -23,8 +23,6 @@ jobs:
             account_id: 112875909405
           - realm: cyera-stage
             account_id: 925314695942
-          - realm: cyera-stage-prototype
-            account_id: 378356664844
           - realm: dg-stage
             account_id: 708380009554
 
