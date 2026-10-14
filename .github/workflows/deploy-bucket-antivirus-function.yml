@@ -6,9 +6,7 @@ on:
     branches:
       - master
 
-permissions:
-  id-token: write
-  contents: read
+permissions: {}
 
 env:
   AWS_REGION: us-west-2
@@ -16,6 +14,9 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-22.04
+    permissions:
+      id-token: write
+      contents: read
     strategy:
       matrix:
         include: 
@@ -64,3 +65,23 @@ jobs:
             --function-name bucket-antivirus-update-${{ matrix.realm }} \
             --query '{LastModified: LastModified, Version: Version, CodeSha256: CodeSha256}' \
             --output table
+
+  label-deployed-prs:
+    needs: deploy
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: datagrail/dg-github-actions/label-deployed-prs@db8934134057f72fc61a9b935ba48e2c9716816f # v1.3.0
+        with:
+          label: |
+            Realm_Cyera_Prod
+            Realm_Cyera_Stage
+            Realm_Dg_Stage
+          environment: cyera-prod, cyera-stage, dg-stage
+          ref: ${{ github.sha }}
+          # workflow_dispatch can run from any branch; only label deploys of master
+          require-default-branch: true
+          # Every merge to master deploys here, so a comment would just echo the merge
+          comment: false
