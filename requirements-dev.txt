@@ -1,5 +1,7 @@
 # boto3 available by default in AWS but not locally
 boto3
+# botocore falls back to its vendored CA bundle (still trusts a compromised root) unless certifi is installed (SIR-358)
+certifi>=2026.10.19
 
 # Test requirements
 coverage
