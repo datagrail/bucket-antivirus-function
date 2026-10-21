@@ -17,7 +17,7 @@ COPY requirements.txt ./
 # Install dependencies
 
 # Install Python dependencies into the deployment package
-RUN pip3 install --upgrade pip && pip3 install -r requirements.txt --target .
+RUN pip3 install --upgrade "pip>=26.2.2" && pip3 install -r requirements.txt --target .
 
 # Install system packages needed for ClamAV and others
 
