@@ -79,7 +79,7 @@ this every 3 hours to stay protected from the latest threats.
 3. Choose **Author from scratch** on the *Create function* page
 4. Name your function `bucket-antivirus-update` when prompted on the
 *Configure function* step.
-5. Set *Runtime* to `Python 3.7`
+5. Set *Runtime* to `Python 3.13`
 6. Create a new role name `bucket-antivirus-update` that uses the
 following policy document
 
@@ -145,7 +145,7 @@ the default provided.
 2. From the AWS Lambda Dashboard, click **Create function**
 3. Choose **Author from scratch** on the *Create function* page
 4. Name your function `bucket-antivirus-function`
-5. Set *Runtime* to `Python 3.7`
+5. Set *Runtime* to `Python 3.13`
 6. Create a new role name `bucket-antivirus-function` that uses the
 following policy document
 

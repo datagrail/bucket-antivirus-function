@@ -17,7 +17,6 @@ import copy
 import json
 import os
 from urllib.parse import unquote_plus
-from distutils.util import strtobool
 
 import boto3
 
@@ -271,4 +270,10 @@ def lambda_handler(event, context):
 
 
 def str_to_bool(s):
-    return bool(strtobool(str(s)))
+    # Same values distutils.util.strtobool accepted; distutils was removed in Python 3.12.
+    value = str(s).lower()
+    if value in ("y", "yes", "t", "true", "on", "1"):
+        return True
+    if value in ("n", "no", "f", "false", "off", "0"):
+        return False
+    raise ValueError("invalid truth value %r" % (s,))

@@ -56,4 +56,4 @@ def create_dir(path):
 
 
 def get_timestamp():
-    return datetime.datetime.utcnow().strftime("%Y/%m/%d %H:%M:%S UTC")
+    return datetime.datetime.now(datetime.timezone.utc).strftime("%Y/%m/%d %H:%M:%S UTC")

@@ -17,14 +17,20 @@ jobs:
   deploy:
     runs-on: ubuntu-22.04
     strategy:
+      # One realm failing (e.g. a missing deploy role) must not cancel the others mid-deploy.
+      fail-fast: false
       matrix:
-        include: 
-          - realm: cyera-prod
-            account_id: 112875909405
-          - realm: cyera-stage
-            account_id: 925314695942
-          - realm: dg-stage
-            account_id: 708380009554
+        # The build targets python3.13 (Amazon Linux 2023, ClamAV 1.4 needs glibc >= 2.28), so it only
+        # deploys to python3.13 functions. cyera-prod, cyera-stage and dg-stage are still python3.11
+        # (Amazon Linux 2) running the previous build; add each back here as its functions move to
+        # python3.13 in dg-terraform.
+        include:
+          # Side-by-side python3.13 replacements for datagrail-prod's legacy python3.7 functions (see
+          # dg-terraform terraform/projects/dgapp_lambdas/realms/production/bucket_antivirus_py313.tf).
+          - realm: production
+            account_id: 338780525468
+            scan_function: bucket-antivirus-scan-production
+            update_function: bucket-antivirus-update-production
 
     steps:
       - uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
@@ -40,27 +46,27 @@ jobs:
       - name: Deploy to bucket-antivirus-function Lambda
         run: |
           aws lambda update-function-code \
-            --function-name bucket-antivirus-function-${{ matrix.realm }} \
+            --function-name ${{ matrix.scan_function }} \
             --zip-file fileb://build/lambda.zip \
             --publish
 
       - name: Get bucket-antivirus-function Lambda updated info
         run: |
           aws lambda get-function-configuration \
-            --function-name bucket-antivirus-function-${{ matrix.realm }} \
+            --function-name ${{ matrix.scan_function }} \
             --query '{LastModified: LastModified, Version: Version, CodeSha256: CodeSha256}' \
             --output table
 
       - name: Deploy to bucket-antivirus-update Lambda
         run: |
           aws lambda update-function-code \
-            --function-name bucket-antivirus-update-${{ matrix.realm }} \
+            --function-name ${{ matrix.update_function }} \
             --zip-file fileb://build/lambda.zip \
             --publish
 
       - name: Get bucket-antivirus-update Lambda updated info
         run: |
           aws lambda get-function-configuration \
-            --function-name bucket-antivirus-update-${{ matrix.realm }} \
+            --function-name ${{ matrix.update_function }} \
             --query '{LastModified: LastModified, Version: Version, CodeSha256: CodeSha256}' \
             --output table
