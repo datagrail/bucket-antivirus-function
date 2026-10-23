@@ -1,7 +1,13 @@
 
-# Use the official AWS Lambda Python 3.11 base image
+# Use the official AWS Lambda Python 3.13 base image (Amazon Linux 2023). Lambda runs these
+# functions on x86_64; `make archive` builds for linux/amd64 even on arm64 hosts.
 
-FROM public.ecr.aws/lambda/python:3.11
+FROM public.ecr.aws/lambda/python:3.13
+
+# ClamAV comes from Cisco-Talos's official release RPM, not the distro: AL2023 only ships the
+# end-of-life 0.103 LTS. Bump both together; the digest is on the GitHub release asset.
+ARG CLAMAV_VERSION=1.4.6
+ARG CLAMAV_RPM_SHA256=746feb3d9f1c2273c38fd9ac3129b2eafa358078870fef3d76afebf9a4bdd4ae
 
 
 # Set up working directories
@@ -19,10 +25,13 @@ COPY requirements.txt ./
 # Install Python dependencies into the deployment package
 RUN pip3 install --upgrade "pip>=26.2.2" && pip3 install -r requirements.txt --target .
 
-# Install system packages needed for ClamAV and others
+# Install system packages needed for packaging and ClamAV
 
-# Install ClamAV and all required system libraries
-RUN yum install -y zip unzip less clamav clamav-lib clamav-update json-c pcre2 libprelude gnutls libtasn1 nettle libtool-ltdl
+RUN dnf install -y zip unzip findutils && dnf clean all
+RUN curl -fsSL -o /tmp/clamav.rpm \
+    "https://github.com/Cisco-Talos/clamav/releases/download/clamav-${CLAMAV_VERSION}/clamav-${CLAMAV_VERSION}.linux.x86_64.rpm" && \
+  echo "${CLAMAV_RPM_SHA256}  /tmp/clamav.rpm" | sha256sum -c - && \
+  rpm -i /tmp/clamav.rpm && rm /tmp/clamav.rpm
 
 
 
@@ -33,12 +42,14 @@ RUN rm -rf /root/.cache/pip
 
 # Copy over the binaries and libraries
 
-# Copy ClamAV binaries and all required shared libraries
+# Copy ClamAV binaries and the shared libraries they need. glibc itself is skipped: the Lambda
+# runtime provides it, and loading a second copy from LD_LIBRARY_PATH breaks the binaries.
 WORKDIR /tmp
-RUN cp /usr/bin/clamscan /usr/bin/freshclam /opt/app/bin/ && \
-  ldd /usr/bin/clamscan | awk '{print $3}' | grep -E '^/' | xargs -I '{}' cp -v '{}' /opt/app/bin/ && \
-  ldd /usr/bin/freshclam | awk '{print $3}' | grep -E '^/' | xargs -I '{}' cp -v '{}' /opt/app/bin/ && \
-  find /usr/lib64 -maxdepth 1 -type f -name 'libclamav*' -exec cp -v {} /opt/app/bin/ \;
+RUN cp /usr/local/bin/clamscan /usr/local/bin/freshclam /opt/app/bin/ && \
+  ldd /usr/local/bin/clamscan /usr/local/bin/freshclam | awk '{print $3}' | grep -E '^/' | \
+  grep -vE '/(libc|libm|libdl|libpthread|librt|libutil|libresolv|ld-linux[^/]*)\.so' | sort -u | \
+  xargs -I '{}' cp -v '{}' /opt/app/bin/ && \
+  LD_LIBRARY_PATH=/opt/app/bin /opt/app/bin/clamscan --version
 
 # Fix the freshclam.conf settings
 
