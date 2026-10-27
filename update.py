@@ -46,7 +46,7 @@ def lambda_handler(event, context):
         s3.Bucket(AV_DEFINITION_S3_BUCKET).download_file(s3_path, local_path)
         print("Downloading definition file %s complete!" % (local_path))
 
-    clamav.update_defs_from_freshclam(AV_DEFINITION_PATH, CLAMAVLIB_PATH)
+    fc_returncode = clamav.update_defs_from_freshclam(AV_DEFINITION_PATH, CLAMAVLIB_PATH)
     # If main.cvd gets updated (very rare), we will need to force freshclam
     # to download the compressed version to keep file sizes down.
     # The existence of main.cud is the trigger to know this has happened.
@@ -54,8 +54,14 @@ def lambda_handler(event, context):
         os.remove(os.path.join(AV_DEFINITION_PATH, "main.cud"))
         if os.path.exists(os.path.join(AV_DEFINITION_PATH, "main.cvd")):
             os.remove(os.path.join(AV_DEFINITION_PATH, "main.cvd"))
-        clamav.update_defs_from_freshclam(AV_DEFINITION_PATH, CLAMAVLIB_PATH)
+        fc_returncode = clamav.update_defs_from_freshclam(AV_DEFINITION_PATH, CLAMAVLIB_PATH)
+    # Upload before failing so a partial update (e.g. daily updated, main failed) still lands.
     clamav.upload_defs_to_s3(
         s3_client, AV_DEFINITION_S3_BUCKET, AV_DEFINITION_S3_PREFIX, AV_DEFINITION_PATH
     )
+    # freshclam exits 0 both when it updated and when everything was already up to date, so any
+    # other exit code is a failed update. Raise so it shows up in the Lambda Errors metric instead
+    # of the definitions silently going stale.
+    if fc_returncode != 0:
+        raise RuntimeError("freshclam exited with code %s" % fc_returncode)
     print("Script finished at %s\n" % get_timestamp())
