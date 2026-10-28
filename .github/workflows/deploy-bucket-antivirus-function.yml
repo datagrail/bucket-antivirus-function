@@ -21,12 +21,18 @@ jobs:
       fail-fast: false
       matrix:
         # The build targets python3.13 (Amazon Linux 2023, ClamAV 1.4 needs glibc >= 2.28), so it only
-        # deploys to python3.13 functions. cyera-prod and cyera-stage are still python3.11 (Amazon
-        # Linux 2) running the previous build; add each back here as its functions move to python3.13
-        # in dg-terraform.
+        # deploys to python3.13 functions.
         include:
-          # dg-stage's side-by-side python3.13 scanner and its in-place python3.13 updater (dg-terraform
+          # Each realm's side-by-side python3.13 scanner and its in-place python3.13 updater (dg-terraform
           # modules dgapp_lambda_bucket_antivirus_function / dgapp_lambda_bucket_antivirus_update).
+          - realm: cyera-prod
+            account_id: 112875909405
+            scan_function: bucket-antivirus-scan-cyera-prod
+            update_function: bucket-antivirus-update-cyera-prod
+          - realm: cyera-stage
+            account_id: 925314695942
+            scan_function: bucket-antivirus-scan-cyera-stage
+            update_function: bucket-antivirus-update-cyera-stage
           - realm: dg-stage
             account_id: 708380009554
             scan_function: bucket-antivirus-scan-dg-stage
