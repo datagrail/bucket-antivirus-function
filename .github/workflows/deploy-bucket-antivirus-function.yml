@@ -23,8 +23,8 @@ jobs:
         # The build targets python3.13 (Amazon Linux 2023, ClamAV 1.4 needs glibc >= 2.28), so it only
         # deploys to python3.13 functions.
         include:
-          # Each realm's side-by-side python3.13 scanner and its in-place python3.13 updater (dg-terraform
-          # modules dgapp_lambda_bucket_antivirus_function / dgapp_lambda_bucket_antivirus_update).
+          # Each realm's scanner and updater (dg-terraform modules dgapp_lambda_bucket_antivirus_function
+          # / dgapp_lambda_bucket_antivirus_update).
           - realm: cyera-prod
             account_id: 112875909405
             scan_function: bucket-antivirus-scan-cyera-prod
@@ -37,8 +37,8 @@ jobs:
             account_id: 708380009554
             scan_function: bucket-antivirus-scan-dg-stage
             update_function: bucket-antivirus-update-dg-stage
-          # Side-by-side python3.13 replacements for datagrail-prod's legacy python3.7 functions (see
-          # dg-terraform terraform/projects/dgapp_lambdas/realms/production/bucket_antivirus_py313.tf).
+          # datagrail-prod builds its functions without those modules (dg-terraform
+          # terraform/projects/dgapp_lambdas/realms/production/bucket_antivirus_py313.tf).
           - realm: production
             account_id: 338780525468
             scan_function: bucket-antivirus-scan-production
